@@ -114,7 +114,7 @@ class ServerWorker:
 			
 			# Stop sending if request is PAUSE or TEARDOWN
 			if self.clientInfo['event'].isSet(): 
-				break 
+				break
 				
 			data = self.clientInfo['videoStream'].nextFrame()
 			if data: 

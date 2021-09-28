@@ -66,12 +66,27 @@ class Client:
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
 	
-	def setupMovie(self):
-		"""Setup button handler."""
+	# VIDEO DISPLAY
+	def writeFrame(self, data):
+		"""Write the received frame to a temp image file. Return the image file."""
 	#TODO
 	
-	def exitClient(self):
-		"""Teardown button handler."""
+	def updateMovie(self, imageFile):
+		"""Update the image file as video frame in the GUI."""
+	#TODO
+
+	def handler(self):
+		"""Handler on explicitly closing the GUI window."""
+
+
+
+		# Khi đóng cửa sổ thì ngắt kết nối luôn
+		self.rtspSocket.close()
+		#TODO
+
+	# RTSP REQUESTS TRIGGER
+	def setupMovie(self):
+		"""Setup button handler."""
 	#TODO
 
 	def pauseMovie(self):
@@ -81,30 +96,61 @@ class Client:
 	def playMovie(self):
 		"""Play button handler."""
 	#TODO
+
+	def exitClient(self):
+		"""Teardown button handler."""
+	#TODO
 	
-	def listenRtp(self):		
+	# SENDING AND RECEIVING FRAMES
+
+	""" DŨNG NOTE: 
+		UDP: 	client: sendto -> recvfrom
+				server: bind -> recvfrom -> sendto
+		TCP: 	client: connect -> send -> recv
+				server: bind -> listen -> accept -> recv -> send
+	"""
+
+	def openRtpPort(self):
+		"""Open RTP socket binded to a specified port."""
+
+		# Create a new datagram socket to receive RTP packets from the server
+		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+		self.rtpSocket.bind(('', self.rtpPort))
+
+		# Set the timeout value of the socket to 0.5sec
+		self.rtpSocket.settimeout(0.5)
+
+	def listenRtp(self):
 		"""Listen for RTP packets."""
-		#TODO
-					
-	def writeFrame(self, data):
-		"""Write the received frame to a temp image file. Return the image file."""
-	#TODO
-	
-	def updateMovie(self, imageFile):
-		"""Update the image file as video frame in the GUI."""
-	#TODO
+		print('[RTP] Listening on port ' + self.rtpPort)
+
+		# Receive a RtpPacket from this line of code in ServerWorker
+		byteStream, address = self.rtpSocket.recvfrom(1024)
 		
+		packet = RtpPacket()
+		packet.decode(byteStream)
+		imageFile = packet.getPayload()
+
+		### Info for DESCRIBE request
+		
+		# version = packet.version()
+		# sequence = packet.seqNum()
+		# ts = packet.timestamp()
+		# payloadType = packet.payloadType()
+
+	# RTSP REQUESTS
 	def connectToServer(self):
 		"""Connect to the Server. Start a new RTSP/TCP session."""
-	#TODO
+		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+		self.rtspSocket.connect((self.serverAddr, self.serverPort))
+		print('[RTSP] Connected to ' + self.serverAddr + ' port ' + str(self.serverPort))
 	
+
 	def sendRtspRequest(self, requestCode):
 		"""Send RTSP request to the server."""	
 		#-------------
 		# TO COMPLETE
 		#-------------
-		
-	
 	
 	def recvRtspReply(self):
 		"""Receive RTSP reply from the server."""
@@ -112,22 +158,6 @@ class Client:
 	
 	def parseRtspReply(self, data):
 		"""Parse the RTSP reply from the server."""
-		#TODO
-	
-	def openRtpPort(self):
-		"""Open RTP socket binded to a specified port."""
-		#-------------
-		# TO COMPLETE
-		#-------------
-		# Create a new datagram socket to receive RTP packets from the server
-		# self.rtpSocket = ...
-		
-		# Set the timeout value of the socket to 0.5sec
-		# ...
-		
-
-	def handler(self):
-		"""Handler on explicitly closing the GUI window."""
 		#TODO
 
 """
