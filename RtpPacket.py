@@ -17,18 +17,18 @@ class RtpPacket:
 		#--------------
 		# Fill the header bytearray with RTP header fields
 
-		header[0] = header[0] | version << 6 | padding << 5 | extension << 4 | cc & 15
-		header[1] = header[1] | marker << 7 | pt & 127
-		header[2] = header[2] | seqnum >> 8
-		header[3] = header[3] | seqnum & 255
-		header[4] = header[4] | timestamp >> 24 
-		header[5] = header[5] | timestamp >> 16
-		header[6] = header[6] | timestamp >> 8
-		header[7] = header[7] | timestamp & 255
-		header[8] = header[8] | ssrc >> 24 
-		header[9] = header[9] | ssrc >> 16
-		header[10] = header[10] | ssrc >> 8
-		header[11] = header[11] | ssrc & 255
+		self.header[0] = self.header[0] | version << 6 | padding << 5 | extension << 4 | cc & 15
+		self.header[1] = self.header[1] | marker << 7 | pt & 127
+		self.header[2] = self.header[2] | seqnum >> 8
+		self.header[3] = self.header[3] | seqnum & 255
+		self.header[4] = self.header[4] | timestamp >> 24 
+		self.header[5] = self.header[5] | timestamp >> 16
+		self.header[6] = self.header[6] | timestamp >> 8
+		self.header[7] = self.header[7] | timestamp & 255
+		self.header[8] = self.header[8] | ssrc >> 24 
+		self.header[9] = self.header[9] | ssrc >> 16
+		self.header[10] = self.header[10] | ssrc >> 8
+		self.header[11] = self.header[11] | ssrc & 255
 
 		# Get the payload from the argument
 		self.payload = bytearray(payload)
