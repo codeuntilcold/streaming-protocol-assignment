@@ -88,14 +88,25 @@ class Client:
 	def setupMovie(self):
 		"""Setup button handler."""
 	#TODO
+		if self.state == self.INIT:
+    			self.sendRtspRequest(self.SETUP)
 
 	def pauseMovie(self):
 		"""Pause button handler."""
 	#TODO
+		if self.state == self.PLAYING:
+    			self.sendRtspRequest(self.PAUSE)
 	
 	def playMovie(self):
 		"""Play button handler."""
 	#TODO
+		if self.state == self.READY:
+    			# print("Play movie")
+				# threading.Thread(target=self.listenRtp).start()
+				# self.playEvent = threading.Event()
+				# self.playEvent.clear()
+				# self.playMovie
+				self.sendRtspRequest(self.PLAY)
 
 	def exitClient(self):
 		"""Teardown button handler."""
