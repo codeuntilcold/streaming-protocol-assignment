@@ -87,19 +87,16 @@ class Client:
 	# RTSP REQUESTS TRIGGER
 	def setupMovie(self):
 		"""Setup button handler."""
-	#TODO
 		if self.state == self.INIT:
     			self.sendRtspRequest(self.SETUP)
 
 	def pauseMovie(self):
 		"""Pause button handler."""
-	#TODO
 		if self.state == self.PLAYING:
     			self.sendRtspRequest(self.PAUSE)
 	
 	def playMovie(self):
 		"""Play button handler."""
-	#TODO
 		if self.state == self.READY:
     			# print("Play movie")
 				# threading.Thread(target=self.listenRtp).start()
@@ -110,7 +107,6 @@ class Client:
 
 	def exitClient(self):
 		"""Teardown button handler."""
-	#TODO
 		self.sendRtspRequest(self.TEARDOWN)
 		self.master.destroy()
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
