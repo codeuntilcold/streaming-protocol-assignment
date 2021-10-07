@@ -111,6 +111,12 @@ class Client:
 	def exitClient(self):
 		"""Teardown button handler."""
 	#TODO
+		self.sendRtspRequest(self.TEARDOWN)
+		self.master.destroy()
+		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
+		# rate = float(self.counter/self.frameNbr)
+		# print
+		sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
 
