@@ -69,20 +69,65 @@ class Client:
 	# VIDEO DISPLAY
 	def writeFrame(self, data):
 		"""Write the received frame to a temp image file. Return the image file."""
-	#TODO
+
+		""" Không bắt lỗi :"""
+		# cachename = CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT
+		# file = open(cachename, "wb")
+		# file.write(data)
+		# file.close()
+		
+		# return cachename
+		""" else : """
+		cachename = CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT
+
+		try:
+			file = open(cachename, "wb")
+		except:
+			print("file open error")
+
+		try:
+			file.write(data)
+		except:
+			print("file write error")
+
+		file.close()
+
+		return cachename
+
 	
 	def updateMovie(self, imageFile):
 		"""Update the image file as video frame in the GUI."""
-	#TODO
+		# ----------------------------------------------------
+		""" Nếu không bắt lỗi khi mở ảnh :"""
+		# photo = ImageTk.PhotoImage(Image.open(imageFile))
+		# self.label.configure(image = photo, height=288) 
+		# self.label.image = photo
+
+		""" else :"""
+		try:
+			photo = ImageTk.PhotoImage(Image.open(imageFile)) #stuck here !!!!!!
+		except:
+			print("photo error")
+			print('-'*60)
+			traceback.print_exc(file=sys.stdout)
+			print('-'*60)
+
+		self.label.configure(image = photo, height=288)
+		self.label.image = photo
 
 	def handler(self):
 		"""Handler on explicitly closing the GUI window."""
-
-
-
-		# Khi đóng cửa sổ thì ngắt kết nối luôn
-		self.rtspSocket.close()
-		#TODO
+		self.pauseMovie()
+		#if tkMessageBox.askokcancel("Quit?", "Are you sure you want to quit?"):
+		if tkinter.messagebox.askokcancel("Quit?", "Are you sure you want to quit?"):
+			self.exitClient()
+		else: # When the user presses cancel, resume playing.
+			#self.playMovie()
+			print("Playing Movie")
+			threading.Thread(target=self.listenRtp).start()
+			#self.playEvent = threading.Event()
+			#self.playEvent.clear()
+			self.sendRtspRequest(self.PLAY)
 
 	# RTSP REQUESTS TRIGGER
 	def setupMovie(self):
