@@ -161,19 +161,12 @@ class Client:
 	
 	# SENDING AND RECEIVING FRAMES
 
-	""" DŨNG NOTE: 
-		UDP: 	client: sendto -> recvfrom
-				server: bind -> recvfrom -> sendto
-		TCP: 	client: connect -> send -> recv
-				server: bind -> listen -> accept -> recv -> send
-	"""
-
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
 
 		# Create a new datagram socket to receive RTP packets from the server
 		self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		self.rtpSocket.bind(('', self.rtpPort))
+		self.rtpSocket.bind((self.serverAddr, self.rtpPort))
 
 		# Set the timeout value of the socket to 0.5sec
 		self.rtpSocket.settimeout(0.5)
@@ -182,19 +175,34 @@ class Client:
 		"""Listen for RTP packets."""
 		print('[RTP] Listening on port ' + self.rtpPort)
 
-		# Receive a RtpPacket from this line of code in ServerWorker
-		byteStream, address = self.rtpSocket.recvfrom(1024)
-		
-		packet = RtpPacket()
-		packet.decode(byteStream)
-		imageFile = packet.getPayload()
+		while True:
+			try:
+				byteStream, address = self.rtpSocket.recvfrom(1024)
+				
+				packet = RtpPacket()
+				packet.decode(byteStream)
 
-		### Info for DESCRIBE request
-		
-		# version = packet.version()
-		# sequence = packet.seqNum()
-		# ts = packet.timestamp()
-		# payloadType = packet.payloadType()
+				currentFrameNum = packet.seqNum()
+				if currentFrameNum > self.frameNbr:
+					self.frameNbr = currentFrameNum
+					imageFile = packet.getPayload()
+					self.updateMovie(self.writeFrame(imageFile))
+			except:
+				# Stop listening when receive PAUSE or TEARDOWN
+				if self.playEvent.isSet():
+					break
+
+				if self.teardownAcked == 1:
+					self.rtpSocket.shutdown(socket.SHUT_RDWR)
+					self.rtpSocket.close()
+					break
+					
+			### Info for DESCRIBE request
+			
+			# version = packet.version()
+			# sequence = packet.seqNum()
+			# ts = packet.timestamp()
+			# payloadType = packet.payloadType()
 
 	# RTSP REQUESTS
 	def connectToServer(self):
