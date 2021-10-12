@@ -196,7 +196,7 @@ class Client:
 					self.rtpSocket.shutdown(socket.SHUT_RDWR)
 					self.rtpSocket.close()
 					break
-					
+
 			### Info for DESCRIBE request
 			
 			# version = packet.version()
@@ -227,7 +227,7 @@ class Client:
 			# request = ...
 			request = "SETUP " + str(self.fileName) + "\n" + str(self.rtspSeq) + "\n" + " RTSP/1.0 RTP/UDP " + str(self.rtpPort)
 
-			self.rtspSocket.send(request)
+			self.rtspSocket.send(request.encode())
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.SETUP
@@ -242,7 +242,7 @@ class Client:
 			request = "PLAY " + "\n" + str(self.rtspSeq)
 
 			self.rtspSocket.send(request)
-			print '-'*60 + "\nPLAY request sent to Server...\n" + '-'*60
+			print('-'*60 + "\nPLAY request sent to Server...\n" + '-'*60)
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.PLAY
@@ -256,7 +256,7 @@ class Client:
 			# request = ...
 			request = "PAUSE " + "\n" + str(self.rtspSeq)
 			self.rtspSocket.send(request)
-			print '-'*60 + "\nPAUSE request sent to Server...\n" + '-'*60
+			print('-'*60 + "\nPAUSE request sent to Server...\n" + '-'*60)
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.PAUSE
@@ -273,7 +273,7 @@ class Client:
 			# request = ...
 			request = "TEARDOWN " + "\n" + str(self.rtspSeq)
 			self.rtspSocket.send(request)
-			print '-'*60 + "\nTEARDOWN request sent to Server...\n" + '-'*60
+			print('-'*60 + "\nTEARDOWN request sent to Server...\n" + '-'*60)
 			# Keep track of the sent request.
 			# self.requestSent = ...
 			self.requestSent = self.TEARDOWN
@@ -304,7 +304,7 @@ class Client:
 	def parseRtspReply(self, data):
 		"""Parse the RTSP reply from the server."""
 		#TODO
-		print "Parsing Received Rtsp data..."
+		print("Parsing Received Rtsp data...")
 
 		"""Parse the RTSP reply from the server."""
 		lines = data.split('\n')
@@ -325,17 +325,17 @@ class Client:
 						# TO COMPLETE
 						#-------------
 						# Update RTSP state.
-						print "Updating RTSP state..."
+						print("Updating RTSP state...")
 						# self.state = ...
 						self.state = self.READY
 						# Open RTP port.
 						#self.openRtpPort()
-						print "Setting Up RtpPort for Video Stream"
+						print("Setting Up RtpPort for Video Stream")
 						self.openRtpPort()
 
 					elif self.requestSent == self.PLAY:
 						 self.state = self.PLAYING
-						 print '-'*60 + "\nClient is PLAYING...\n" + '-'*60
+						 print('-'*60 + "\nClient is PLAYING...\n" + '-'*60)
 					elif self.requestSent == self.PAUSE:
 						 self.state = self.READY
 
