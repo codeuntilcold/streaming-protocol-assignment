@@ -21,10 +21,10 @@ class RtpPacket:
 		self.header[1] = self.header[1] | marker << 7 | pt & 127
 		self.header[2] = self.header[2] | seqnum >> 8
 		self.header[3] = self.header[3] | seqnum & 255
-		self.header[4] = self.header[4] | timestamp >> 24 
-		self.header[5] = self.header[5] | timestamp >> 16
-		self.header[6] = self.header[6] | timestamp >> 8
-		self.header[7] = self.header[7] | timestamp & 255
+		self.header[4] = self.header[4] | (timestamp >> 24 ) & 255
+		self.header[5] = self.header[5] | (timestamp >> 16) & 255
+		self.header[6] = self.header[6] | (timestamp >> 8) & 255
+		self.header[7] = self.header[7] | (timestamp & 255) & 255
 		self.header[8] = self.header[8] | ssrc >> 24 
 		self.header[9] = self.header[9] | ssrc >> 16
 		self.header[10] = self.header[10] | ssrc >> 8
