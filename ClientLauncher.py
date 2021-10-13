@@ -16,5 +16,6 @@ if __name__ == "__main__":
 	# Create a new client
 	app = Client(root, serverAddr, serverPort, rtpPort, fileName)
 	app.master.title("RTPClient")	
+	root.resizable(0,0)
 	root.mainloop()
 	
