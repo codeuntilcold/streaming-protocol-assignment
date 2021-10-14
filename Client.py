@@ -1,8 +1,5 @@
 from tkinter import *
 import tkinter.messagebox
-tkinter.messagebox
-from tkinter import messagebox 
-tkinter.messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
 
@@ -147,12 +144,12 @@ class Client:
 	def setupMovie(self):
 		"""Setup button handler."""
 		if self.state == self.INIT:
-    			self.sendRtspRequest(self.SETUP)
+			self.sendRtspRequest(self.SETUP)
 
 	def pauseMovie(self):
 		"""Pause button handler."""
 		if self.state == self.PLAYING:
-    			self.sendRtspRequest(self.PAUSE)
+			self.sendRtspRequest(self.PAUSE)
 	
 	def playMovie(self):
 		"""Play button handler."""
@@ -166,14 +163,13 @@ class Client:
 
 	def exitClient(self):
 		"""Teardown button handler."""
-		self.sendRtspRequest(self.TEARDOWN)
-		self.master.destroy()
-		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
-		# rate = float(self.counter/self.frameNbr)
-		# print
-		rate = float(self.counter/self.frameNbr)
-		print('-'*60 + "\nRTP Packet Loss Rate :" + str(rate) +"\n" + '-'*60)
-		sys.exit(0)
+		if self.state == self.READY or self.state == self.PLAYING:
+			self.sendRtspRequest(self.TEARDOWN)
+			self.master.destroy()
+			os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
+			rate = float(self.counter/self.frameNbr)
+			print('-'*60 + "\nRTP Packet Loss Rate: " + str(rate) +"\n" + '-'*60)
+			sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
 
