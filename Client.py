@@ -172,79 +172,44 @@ class Client:
 			sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
-
+	""" DŨNGNOTE: 
+		UDP: 	client: sendto -> recvfrom
+				server: bind -> recvfrom -> sendto
+		TCP: 	client: connect -> send -> recv
+				server: bind -> listen -> accept -> recv -> send
+	"""
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
 
-		# # Create a new datagram socket to receive RTP packets from the server
-		# self.rtpSocket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-		# self.rtpSocket.bind((self.serverAddr, self.rtpPort))
-
-		# # Set the timeout value of the socket to 0.5sec
-		# self.rtpSocket.settimeout(0.5)
+		# Set the timeout value of the socket to 0.5sec
 		self.rtpSocket.settimeout(0.5)
-#		try:
-			# Bind the socket to the address using the RTP port given by the client user
-			# ...
-#		except:
-#			tkMessageBox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 
+		# Create a new datagram socket to receive RTP packets from the server
 		try:
-			#self.rtpSocket.connect(self.serverAddr,self.rtpPort)
-			self.rtpSocket.bind((self.serverAddr,self.rtpPort))   # WATCH OUT THE ADDRESS FORMAT!!!!!  rtpPort# should be bigger than 1024
-			#self.rtpSocket.listen(5)
+			self.rtpSocket.bind((self.serverAddr,self.rtpPort))
 			print("Bind RtpPort Success")
-
 		except:
 			tkinter.messagebox.showwarning('Connection Failed', 'Connection to rtpServer failed...')
 
 	def listenRtp(self):
 		"""Listen for RTP packets."""
-		# print('[RTP] Listening on port ' + self.rtpPort)
+		print('[RTP] Listening on port %d' %self.rtpPort)
 
-		# while True:
-		# 	try:
-		# 		byteStream, address = self.rtpSocket.recvfrom(1024)
-				
-		# 		packet = RtpPacket()
-		# 		packet.decode(byteStream)
-
-		# 		currentFrameNum = packet.seqNum()
-		# 		if currentFrameNum > self.frameNbr:
-		# 			self.frameNbr = currentFrameNum
-		# 			imageFile = packet.getPayload()
-		# 			self.updateMovie(self.writeFrame(imageFile))
-		# 	except:
-		# 		# Stop listening when receive PAUSE or TEARDOWN
-		# 		if self.playEvent.isSet():
-		# 			break
-
-		# 		if self.teardownAcked == 1:
-		# 			self.rtpSocket.shutdown(socket.SHUT_RDWR)
-		# 			self.rtpSocket.close()
-		# 			break
-					
-			### Info for DESCRIBE request
-			
-			# version = packet.version()
-			# sequence = packet.seqNum()
-			# ts = packet.timestamp()
-			# payloadType = packet.payloadType()
 		while True:
 			try:
-				data,addr = self.rtpSocket.recvfrom(20480)
+				byteStream, addr = self.rtpSocket.recvfrom(20480)
 
-				if data:
-					rtpPacket = RtpPacket()
-					rtpPacket.decode(data)
-					print("||Received Rtp Packet #" + str(rtpPacket.seqNum()) + "|| ")
+				if byteStream:
+					packet = RtpPacket()
+					packet.decode(byteStream)
+					print("||Received Rtp Packet #" + str(packet.seqNum()) + "|| ")
 
 					try:
-						if self.frameNbr + 1 != rtpPacket.seqNum():
+						if self.frameNbr + 1 != packet.seqNum():
 							self.counter += 1
 							print('!'*60 + "\nPACKET LOSS\n" + '!'*60)
-						currFrameNbr = rtpPacket.seqNum()
-						#version = rtpPacket.version()
+						currFrameNbr = packet.seqNum()
+						#version = packet.version()
 					except:
 						print("seqNum() error")
 						print('-'*60)
@@ -253,7 +218,7 @@ class Client:
 
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
-						self.updateMovie(self.writeFrame(rtpPacket.getPayload()))
+						self.updateMovie(self.writeFrame(packet.getPayload()))
 
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
@@ -269,7 +234,6 @@ class Client:
 					break
 
 			### Info for DESCRIBE request
-			
 			# version = packet.version()
 			# sequence = packet.seqNum()
 			# ts = packet.timestamp()
@@ -282,6 +246,7 @@ class Client:
 			self.rtspSocket.connect((self.serverAddr, self.serverPort))
 		except:
 			tkinter.messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
+
 
 	# RTSP REQUESTS	
 
