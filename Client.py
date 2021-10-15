@@ -105,7 +105,6 @@ class Client:
 
 		return cachename
 
-	
 	def updateMovie(self, imageFile):
 		"""Update the image file as video frame in the GUI."""
 		# ----------------------------------------------------
@@ -135,9 +134,6 @@ class Client:
 		else: # When the user presses cancel, resume playing.
 			#self.playMovie()
 			print("Playing Movie")
-			threading.Thread(target=self.listenRtp).start()
-			#self.playEvent = threading.Event()
-			#self.playEvent.clear()
 			self.sendRtspRequest(self.PLAY)
 
 	# RTSP REQUESTS TRIGGER
@@ -155,10 +151,6 @@ class Client:
 		"""Play button handler."""
 		if self.state == self.READY:
 			print("Play movie")
-			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event()
-			self.playEvent.clear()
-			# self.playMovie
 			self.sendRtspRequest(self.PLAY)
 
 	def exitClient(self):
@@ -206,7 +198,7 @@ class Client:
 
 					try:
 						if self.frameNbr + 1 != packet.seqNum():
-							self.counter += 1
+							self.counter += packet.seqNum() - self.frameNbr - 1
 							print('!'*60 + "\nPACKET LOSS\n" + '!'*60)
 						currFrameNbr = packet.seqNum()
 						#version = packet.version()
@@ -365,6 +357,10 @@ class Client:
 						self.openRtpPort() 
 					elif self.requestSent == self.PLAY:
 						self.state = self.PLAYING
+
+						threading.Thread(target=self.listenRtp).start()
+						self.playEvent = threading.Event()
+						self.playEvent.clear()
 					elif self.requestSent == self.PAUSE:
 						self.state = self.READY
                         
