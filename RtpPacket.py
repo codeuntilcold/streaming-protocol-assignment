@@ -16,20 +16,6 @@ class RtpPacket:
 		# TO COMPLETE
 		#--------------
 		# Fill the header bytearray with RTP header fields
-
-		#RTP-version filed(V), must set to 2
-		#padding(P),extension(X),number of contributing sources(CC) and marker(M) fields all set to zero in this lab
-
-		#Because we have no other contributing sources(field CC == 0),the CSRC-field does not exist
-		#Thus the length of the packet header is therefore 12 bytes
-
-
-			#Above all done in ServerWorker.py
-
-		# ...
-		#header[] =
-
-		#header[0] = version + padding + extension + cc + seqnum + marker + pt + ssrc
 		self.header[0] = version << 6
 		self.header[0] = self.header[0] | padding << 5
 		self.header[0] = self.header[0] | extension << 4
@@ -52,18 +38,12 @@ class RtpPacket:
 
 
 		# Get the payload from the argument
-		# self.payload = ...
 		self.payload = payload
 
 	def decode(self, byteStream):
 		"""Decode the RTP packet."""
-
-		#print byteStream[:HEADER_SIZE]
-		self.header = bytearray(byteStream[:HEADER_SIZE])   #temporary solved
-
+		self.header = bytearray(byteStream[:HEADER_SIZE])
 		self.payload = byteStream[HEADER_SIZE:]
-
-
 
 	def version(self):
 		"""Return RTP version."""
