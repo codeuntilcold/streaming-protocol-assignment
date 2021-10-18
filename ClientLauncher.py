@@ -16,12 +16,10 @@ if __name__ == "__main__":
 	
 	# Create a new client
 	app = Client(root, serverAddr, serverPort, rtpPort, fileName)
-<<<<<<< HEAD
-	app.master.title("RTPClient")   # changetitle	
-	root.resizable(0,0)             # create a fixed window, not change size
-	root.mainloop()                 # display window on screen
-=======
+
+	# app.master.title("RTPClient")   # changetitle	
+	# root.resizable(0,0)             # create a fixed window, not change size
+	# root.mainloop()                 # display window on screen
+
 	app.master.title("RTPClient")
 	root.mainloop()
->>>>>>> aace24fea9aceed09b8bf37f61193d9fb4cac736
-	
