@@ -1,4 +1,5 @@
 from tkinter import *
+import customtkinter
 import tkinter.messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
@@ -49,33 +50,39 @@ class Client:
 	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
 	def createWidgets(self):
 		"""Build GUI."""
+		#customtkinter.set_appearance_mode("Dark") # Other: "Light", "System"
+		#self.master.configure(background = '#006666')
 		# Create Setup button
-		self.setup = Button(self.master, width=20, padx=3, pady=3)
-		self.setup["text"] = "Setup"
-		self.setup["command"] = self.setupMovie
+		#photo = ImageTk.PhotoImage(Image.open('./Setup.png').resize((32,32)))
+		self.setup = customtkinter.CTkButton(master=self.master,fg_color=("purple"),text="SET UP",corner_radius=16, command=self.setupMovie)
+		#self.setup.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)#width=20, padx=3, pady=3)
+		# self.setup["text"] = "Setup"
+		# self.setup["command"] = self.setupMovie
 		self.setup.grid(row=1, column=0, padx=2, pady=2)
 		
 		# Create Play button		
-		self.start = Button(self.master, width=20, padx=3, pady=3)
-		self.start["text"] = "Play"
-		self.start["command"] = self.playMovie
+		self.start = customtkinter.CTkButton(master=self.master,fg_color=("green"),text="PLAY",corner_radius=16, command=self.playMovie)
+		# self.start["text"] = "Play"
+		# self.start["command"] = self.playMovie
 		self.start.grid(row=1, column=1, padx=2, pady=2)
 		
 		# Create Pause button			
-		self.pause = Button(self.master, width=20, padx=3, pady=3)
-		self.pause["text"] = "Pause"
-		self.pause["command"] = self.pauseMovie
+		self.pause = customtkinter.CTkButton(master=self.master,fg_color=("#999900"),text="PAUSE",corner_radius=16, command=self.pauseMovie)
+		#Button(self.master, width=20, padx=3, pady=3)
+		# self.pause["text"] = "Pause"
+		# self.pause["command"] = self.pauseMovie
 		self.pause.grid(row=1, column=2, padx=2, pady=2)
 		
 		# Create Teardown button
-		self.teardown = Button(self.master, width=20, padx=3, pady=3)
-		self.teardown["text"] = "Teardown"
-		self.teardown["command"] =  self.exitClient
+		self.teardown = customtkinter.CTkButton(master=self.master,fg_color=("#990000"),text="TEARDOWN",corner_radius=16, command=self.exitClient)
+		#Button(self.master, width=20, padx=3, pady=3)
+		# self.teardown["text"] = "Teardown"
+		# self.teardown["command"] =  self.exitClient
 		self.teardown.grid(row=1, column=3, padx=2, pady=2)
 		
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
-		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
+		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5)
 	
 	# VIDEO DISPLAY
 	def writeFrame(self, data):
