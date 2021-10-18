@@ -46,7 +46,7 @@ class Client:
 		self.teardownAcked = 0
 		self.connectToServer()
 		self.frameNbr = 0
-		self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM)
+		self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # create a UDP protocol socket
 		
 	# Initiation
 	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
@@ -144,23 +144,24 @@ class Client:
 			self.sendRtspRequest(self.PLAY)
 
 	# RTSP REQUESTS TRIGGER
-	def setupMovie(self):
+	def setupMovie(self):             # call when we click on button setup
+		# print("first")
 		"""Setup button handler."""
 		if self.state == self.INIT:
-    			self.sendRtspRequest(self.SETUP)
+			self.sendRtspRequest(self.SETUP)
 
 	def pauseMovie(self):
 		"""Pause button handler."""
 		if self.state == self.PLAYING:
-    			self.sendRtspRequest(self.PAUSE)
+			self.sendRtspRequest(self.PAUSE)
 	
 	def playMovie(self):
 		"""Play button handler."""
 		if self.state == self.READY:
 			print("Play movie")
-			threading.Thread(target=self.listenRtp).start()
-			self.playEvent = threading.Event()
-			self.playEvent.clear()
+			# threading.Thread(target=self.listenRtp).start()
+			# self.playEvent = threading.Event()
+			# self.playEvent.clear()
 			# self.playMovie
 			self.sendRtspRequest(self.PLAY)
 
@@ -261,7 +262,7 @@ class Client:
 
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
-				print("Didn`t receive data!")
+				print("Didn't receive data!")
 				if self.playEvent.isSet():
 					break
 
@@ -271,7 +272,7 @@ class Client:
 					self.rtpSocket.shutdown(socket.SHUT_RDWR)
 					self.rtpSocket.close()
 					break
-
+				
 			### Info for DESCRIBE request
 			
 			# version = packet.version()
@@ -283,7 +284,7 @@ class Client:
 		"""Connect to the Server. Start a new RTSP/TCP session."""
 		self.rtspSocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		try:
-			self.rtspSocket.connect((self.serverAddr, self.serverPort))
+			self.rtspSocket.connect((self.serverAddr, self.serverPort))     # connect to TCP on server
 		except:
 			tkinter.messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 
@@ -295,15 +296,16 @@ class Client:
 		# TO COMPLETE
 		#-------------
 		if requestCode == self.SETUP and self.state == self.INIT:
-			threading.Thread(target=self.recvRtspReply).start()
+			threading.Thread(target=self.recvRtspReply).start()      # begin a thread
                 
 			# Update RTSP sequence number.
-			self.rtspSeq+=1
+			self.rtspSeq += 1
 			
 			# Write the RTSP request to be sent.
 			request = "%s %s %s" % (self.SETUP_STR,self.fileName,self.RTSP_VER)
 			request+="\nCSeq: %d" % self.rtspSeq
 			request+="\nTransport: %s; client_port= %d" % (self.TRANSPORT,self.rtpPort)
+			#request+="ltt"
 			
 			# Keep track of the sent request.
 			self.requestSent = self.SETUP
@@ -353,7 +355,7 @@ class Client:
 			return
 		
 		# Send the RTSP request using rtspSocket.
-		self.rtspSocket.send(request.encode())
+		self.rtspSocket.send(request.encode())    
 		
 		print ('\nData Sent:\n' + request)
 	
@@ -361,8 +363,9 @@ class Client:
 		"""Receive RTSP reply from the server."""
 		#TO DO
 		while True:
-			reply = self.rtspSocket.recv(1024)
+			reply = self.rtspSocket.recv(1024)          # receive packet
 
+			# if received
 			if reply:
 				self.parseRtspReply(reply)
 
@@ -379,13 +382,16 @@ class Client:
 
 		"""Parse the RTSP reply from the server."""
 		lines = data.decode().split('\n')
+		print(lines)                     # info about received packet ['RTSP/1.0 200 OK', 'CSeq: 1', 'Session: 183246']
 		seqNum = int(lines[1].split(' ')[1])
+		#print(seqNum)
 		
 		# Process only if the server reply's sequence number is the same as the request's
 		if seqNum == self.rtspSeq:
-			session = int(lines[2].split(' ')[1])
+			session = int(lines[2].split(' ')[1])                           # Session: 183246
+			print(session)
 			# New RTSP session ID
-			if self.sessionId == 0:
+			if self.sessionId == 0:             # only for setup
 				self.sessionId = session
 			
 			# Process only if the session ID is the same
@@ -404,6 +410,9 @@ class Client:
 						self.openRtpPort() 
 					elif self.requestSent == self.PLAY:
 						self.state = self.PLAYING
+						threading.Thread(target=self.listenRtp).start()
+						self.playEvent = threading.Event()
+						self.playEvent.clear()
 					elif self.requestSent == self.PAUSE:
 						self.state = self.READY
                         
