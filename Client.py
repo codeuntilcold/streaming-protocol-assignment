@@ -27,8 +27,9 @@ class Client:
 	RTSP_VER = "RTSP/1.0"
 	TRANSPORT = "RTP/UDP"
 	
-
 	counter = 0
+
+	# def __init__(self, serveraddr, serverport, rtpport, filename):
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
@@ -44,7 +45,7 @@ class Client:
 		self.connectToServer()
 		self.frameNbr = 0
 		self.rtpSocket = socket.socket(socket.AF_INET,socket.SOCK_DGRAM) # create a UDP protocol socket
-		
+
 	# Initiation
 	# THIS GUI IS JUST FOR REFERENCE ONLY, STUDENTS HAVE TO CREATE THEIR OWN GUI 	
 	def createWidgets(self):
@@ -152,18 +153,14 @@ class Client:
 		"""Play button handler."""
 		if self.state == self.READY:
 			print("Play movie")
-			# threading.Thread(target=self.listenRtp).start()
-			# self.playEvent = threading.Event()
-			# self.playEvent.clear()
-			# self.playMovie
 			self.sendRtspRequest(self.PLAY)
 
 	def exitClient(self):
 		"""Teardown button handler."""
 		if self.state == self.READY or self.state == self.PLAYING:
 			self.sendRtspRequest(self.TEARDOWN)
-			self.master.destroy()
-			os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
+			# self.master.destroy()
+			# os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
 			rate = float(self.counter/self.frameNbr)
 			print('-'*60 + "\nRTP Packet Loss Rate: " + str(rate) +"\n" + '-'*60)
 			sys.exit(0)
@@ -215,7 +212,10 @@ class Client:
 
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
-						self.updateMovie(self.writeFrame(packet.getPayload()))
+						self.writeFrame(packet.getPayload())
+						yield(b'--frame\r\n'
+                			b'Content-Type: image/jpg\r\n\r\n' + packet.getPayload() + b'\r\n')
+						# self.updateMovie(self.writeFrame(packet.getPayload()))
 
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
@@ -242,7 +242,8 @@ class Client:
 		try:
 			self.rtspSocket.connect((self.serverAddr, self.serverPort))     # connect to TCP on server
 		except:
-			tkinter.messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
+			print('Connection to \'%s\' failed.' %self.serverAddr)
+			# tkinter.messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 
 
 	# RTSP REQUESTS	
