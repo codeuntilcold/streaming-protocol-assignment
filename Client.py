@@ -15,6 +15,7 @@ class Client:
 	PLAY_STR = 'PLAY'
 	PAUSE_STR = 'PAUSE'
 	TEARDOWN_STR = 'TEARDOWN'
+	DESCRIBE_STR = 'DESCRIBE'
 	INIT = 0
 	READY = 1
 	PLAYING = 2
@@ -31,6 +32,7 @@ class Client:
 	
 
 	counter = 0
+	version = 'Not stream yet!'
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
@@ -60,26 +62,32 @@ class Client:
 		# self.setup["text"] = "Setup"
 		# self.setup["command"] = self.setupMovie
 		self.setup.grid(row=1, column=0, padx=2, pady=2)
+
+		# Create Describe button		
+		self.describe = customtkinter.CTkButton(master=self.master,fg_color=("black"),text="DESCRIBE",corner_radius=16, command=self.describeMovie)
+		# self.start["text"] = "Play"
+		# self.start["command"] = self.playMovie
+		self.describe.grid(row=1, column=1, padx=2, pady=2)
 		
 		# Create Play button		
 		self.start = customtkinter.CTkButton(master=self.master,fg_color=("green"),text="PLAY",corner_radius=16, command=self.playMovie)
 		# self.start["text"] = "Play"
 		# self.start["command"] = self.playMovie
-		self.start.grid(row=1, column=1, padx=2, pady=2)
+		self.start.grid(row=1, column=2, padx=2, pady=2)
 		
 		# Create Pause button			
 		self.pause = customtkinter.CTkButton(master=self.master,fg_color=("#999900"),text="PAUSE",corner_radius=16, command=self.pauseMovie)
 		#Button(self.master, width=20, padx=3, pady=3)
 		# self.pause["text"] = "Pause"
 		# self.pause["command"] = self.pauseMovie
-		self.pause.grid(row=1, column=2, padx=2, pady=2)
+		self.pause.grid(row=1, column=3, padx=2, pady=2)
 		
 		# Create Teardown button
 		self.teardown = customtkinter.CTkButton(master=self.master,fg_color=("#990000"),text="TEARDOWN",corner_radius=16, command=self.exitClient)
 		#Button(self.master, width=20, padx=3, pady=3)
 		# self.teardown["text"] = "Teardown"
 		# self.teardown["command"] =  self.exitClient
-		self.teardown.grid(row=1, column=3, padx=2, pady=2)
+		self.teardown.grid(row=1, column=4, padx=2, pady=2)
 		
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
@@ -156,7 +164,7 @@ class Client:
 
 	def describeMovie(self):
 		"""Describe button handler."""
-		if self.state == self.PLAYING:
+		if self.state == self.READY or self.state == self.PLAYING:
     			self.sendRtspRequest(self.DESCRIBE)
 
 	def pauseMovie(self):
@@ -197,11 +205,11 @@ class Client:
 		# # Set the timeout value of the socket to 0.5sec
 		# self.rtpSocket.settimeout(0.5)
 		self.rtpSocket.settimeout(0.5)
-#		try:
-			# Bind the socket to the address using the RTP port given by the client user
-			# ...
-#		except:
-#			tkMessageBox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
+		# try:
+		# 	Bind the socket to the address using the RTP port given by the client user
+		# 	...
+		# except:
+		# 	tkMessageBox.showwarning('Unable to Bind', 'Unable to bind PORT=%d' %self.rtpPort)
 
 		try:
 			#self.rtpSocket.connect(self.serverAddr,self.rtpPort)
@@ -237,13 +245,6 @@ class Client:
 		# 			self.rtpSocket.shutdown(socket.SHUT_RDWR)
 		# 			self.rtpSocket.close()
 		# 			break
-					
-			### Info for DESCRIBE request
-			
-			# version = packet.version()
-			# sequence = packet.seqNum()
-			# ts = packet.timestamp()
-			# payloadType = packet.payloadType()
 		while True:
 			try:
 				data,addr = self.rtpSocket.recvfrom(20480)
@@ -258,7 +259,7 @@ class Client:
 							self.counter += 1
 							print('!'*60 + "\nPACKET LOSS\n" + '!'*60)
 						currFrameNbr = rtpPacket.seqNum()
-						#version = rtpPacket.version()
+						self.version = rtpPacket.version()
 					except:
 						print("seqNum() error")
 						print('-'*60)
@@ -353,8 +354,17 @@ class Client:
 			self.requestSent = self.TEARDOWN
 		
 			# Describe request
-		elif requestCode == self.DESCRIBE and self.state == self.PLAYING:
-			pass
+		elif requestCode == self.DESCRIBE and not self.state == self.INIT:
+    			
+			# Update RTSP sequence number.
+			self.rtspSeq+=1
+			
+			# Write the RTSP request to be sent.
+			request = "%s %s %s" % (self.DESCRIBE_STR, self.fileName, self.RTSP_VER)
+			request+="\nCSeq: %d" % self.rtspSeq
+			request+="\nSession: %d" % self.sessionId
+			
+			self.requestSent = self.DESCRIBE
 		
 		else:
 			return
@@ -422,6 +432,17 @@ class Client:
 						
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1 
+					elif self.requestSent == self.DESCRIBE:
+						print('SESSION DESCRIPTION INFO:')
+						print('Streaming kind: RTSP protocol')
+						print('Version: ' + str(self.version))
+					
+					### Info for DESCRIBE request
+			
+			# version = packet.version()
+			# sequence = packet.seqNum()
+			# ts = packet.timestamp()
+			# payloadType = packet.payloadType()
 
 """
 TIẾN - GIAO DIỆN: CREATEWIDGETS, HANDLER, UPDATE MOVIE, WRITEFRAME
