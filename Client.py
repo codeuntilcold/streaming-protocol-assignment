@@ -24,6 +24,7 @@ class Client:
 	PLAY = 1
 	PAUSE = 2
 	TEARDOWN = 3
+	DESCRIBE = 4
 
 	RTSP_VER = "RTSP/1.0"
 	TRANSPORT = "RTP/UDP"
@@ -152,6 +153,11 @@ class Client:
 		"""Setup button handler."""
 		if self.state == self.INIT:
     			self.sendRtspRequest(self.SETUP)
+
+	def describeMovie(self):
+		"""Describe button handler."""
+		if self.state == self.PLAYING:
+    			self.sendRtspRequest(self.DESCRIBE)
 
 	def pauseMovie(self):
 		"""Pause button handler."""
@@ -345,6 +351,10 @@ class Client:
 			request+="\nSession: %d" % self.sessionId
 			
 			self.requestSent = self.TEARDOWN
+		
+			# Describe request
+		elif requestCode == self.DESCRIBE and self.state == self.PLAYING:
+			pass
 		
 		else:
 			return
