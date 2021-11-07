@@ -368,16 +368,16 @@ class Client:
 			# Process only if the session ID is the same
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
-					if self.requestSent == self.SETUP:
+					if self.requestSent == self.SETUP: pass
 						#-------------
 						# TO COMPLETE
 						#-------------
                         
 						# Update RTSP state.
-						self.state = self.READY
+						# self.state = self.READY
 						
-						# Open RTP port.
-						self.openRtpPort() 
+						# # Open RTP port.
+						# self.openRtpPort() 
 
 					elif self.requestSent == self.PLAY:
 						self.state = self.PLAYING
