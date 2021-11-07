@@ -1,7 +1,5 @@
 import sys
 from tkinter import Tk
-
-from werkzeug.utils import redirect
 from Client import Client
 
 # import threading
@@ -17,26 +15,6 @@ PREFIX = 'cache-'
 POSTFIX = '.jpg'
 state = ''
 
-def generate_frames():
-    i = 0
-    while True:
-        try:
-            # time.sleep(0.05)
-            # image = video.nextFrame()
-            image = open(PREFIX + str(client.sessionId) + POSTFIX, 'r')
-            if image:
-                print('Got ', i)
-                i += 1
-            # print(image)
-            # return image
-            frame = bytes(image)
-            yield(b'--frame\r\n'
-                b'Content-Type: image/jpg\r\n\r\n' + frame + b'\r\n')
-        except IOError:
-            print(IOError)
-    # client.updateMovie()
-
-
 
 @app.route('/')
 def index():
@@ -46,10 +24,8 @@ def index():
 def stream():
     # if state == 'play':
     return Response(client.listenRtp(), mimetype='multipart/x-mixed-replace; boundary=frame')
-    # else:
-    #     cachename = PREFIX + str(client.sessionId) + POSTFIX
-    #     image = open(cachename, 'r')
-    #     return (b'Content-type: image/jpg\r\n\r\n' + bytes(image))
+    # elif state == 'pause':
+    #     return Response(generate_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 
 @app.route('/stream/control')
@@ -83,3 +59,24 @@ if __name__ == '__main__':
 
     app.run(debug=True)
     # root.mainloop()
+
+
+
+# def generate_frames():
+#     i = 0
+#     while True:
+#         try:
+#             # time.sleep(0.05)
+#             # image = video.nextFrame()
+#             image = open(PREFIX + str(client.sessionId) + POSTFIX, 'r')
+#             if image:
+#                 print('Got ', i)
+#                 i += 1
+#             # print(image)
+#             # return image
+#             frame = bytes(image)
+#             yield(b'--frame\r\n'
+#                 b'Content-Type: image/jpg\r\n\r\n' + frame + b'\r\n')
+#         except IOError:
+#             print(IOError)
+#     # client.updateMovie()

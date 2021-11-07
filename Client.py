@@ -163,15 +163,9 @@ class Client:
 			# os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
 			rate = float(self.counter/self.frameNbr)
 			print('-'*60 + "\nRTP Packet Loss Rate: " + str(rate) +"\n" + '-'*60)
-			sys.exit(0)
+			# sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
-	""" DŨNGNOTE: 
-		UDP: 	client: sendto -> recvfrom
-				server: bind -> recvfrom -> sendto
-		TCP: 	client: connect -> send -> recv
-				server: bind -> listen -> accept -> recv -> send
-	"""
 	def openRtpPort(self):
 		"""Open RTP socket binded to a specified port."""
 
@@ -212,7 +206,7 @@ class Client:
 
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
-						self.writeFrame(packet.getPayload())
+						# self.writeFrame(packet.getPayload())
 						yield(b'--frame\r\n'
                 			b'Content-Type: image/jpg\r\n\r\n' + packet.getPayload() + b'\r\n')
 						# self.updateMovie(self.writeFrame(packet.getPayload()))
@@ -230,11 +224,6 @@ class Client:
 					self.rtpSocket.close()
 					break
 				
-			### Info for DESCRIBE request
-			# version = packet.version()
-			# sequence = packet.seqNum()
-			# ts = packet.timestamp()
-			# payloadType = packet.payloadType()
 
 	def connectToServer(self):
 		"""Connect to the Server. Start a new RTSP/TCP session."""

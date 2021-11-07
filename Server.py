@@ -24,7 +24,6 @@ class Server:
 			#print(1)
 			# Client request and server accept, 1 socket is created. Client and server can communicate with each other
 			clientInfo['rtspSocket'] = rtspSocket.accept()
-			print("LTT new")
 			ServerWorker(clientInfo).run()
 
 if __name__ == "__main__":
