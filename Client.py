@@ -174,6 +174,7 @@ class Client:
 	def setupMovie(self):
 		"""Setup button handler."""
 		if self.state == self.INIT:
+			self.fileName = self.varFileName.get()
 			self.sendRtspRequest(self.SETUP)
 
 	def describeMovie(self):
@@ -198,11 +199,6 @@ class Client:
 	def backwardMovie(self):
 		if (self.state == self.READY or self.state == self.PLAYING) and (self.frameNbr - self.STEP_RANGE > 0):
 			self.sendRtspRequest(self.BACKWARD, -self.STEP_RANGE)
-
-	def selectMovie(self, index):
-		if self.state == self.INIT:
-			self.fileName = self.videoNames[index]
-			print('Select video ' + self.fileName)
 	
 	def exitClient(self):
 		"""Teardown button handler."""
@@ -438,13 +434,20 @@ class Client:
 				self.videoBtns = []
 				self.videoNames = lines[2].split(' ')[1].split(',')
 				i = 0
-				for name in self.videoNames:
-					btn = customtkinter.CTkButton(master=self.master,fg_color=("gray"),
-						text=name,corner_radius=16, 
-						command=self.selectMovie(i))
-					btn.grid(row=3, column=i, padx=2, pady=2)
-					i += 1
-					self.videoBtns.append(btn)
+				# for name in self.videoNames:
+				# 	btn = customtkinter.CTkButton(master=self.master,fg_color=("gray"),
+				# 		text=name,corner_radius=16, 
+				# 		command=self.selectMovie(i))
+				# 	btn.grid(row=3, column=i, padx=2, pady=2)
+				# 	i += 1
+				# 	self.videoBtns.append(btn)
+
+				self.varFileName = StringVar(self.master)
+				self.varFileName.set(self.videoNames[0])
+
+				self.list = OptionMenu(self.master, self.varFileName, *self.videoNames)
+				self.list.config(padx=15, pady=10, border=2)
+				self.list.grid(row=3, column=0, padx=2, pady=2)
 
 			else:	
 				session = int(lines[2].split(' ')[1])
