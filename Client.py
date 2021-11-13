@@ -3,6 +3,7 @@ import customtkinter
 import tkinter.messagebox
 from PIL import Image, ImageTk
 import socket, threading, sys, traceback, os
+import time
 
 from RtpPacket import RtpPacket
 
@@ -30,9 +31,15 @@ class Client:
 	RTSP_VER = "RTSP/1.0"
 	TRANSPORT = "RTP/UDP"
 	
-
+	# For statistics
 	counter = 0
+	tbegin = 0
+	tend = 0
+	texec = 0
+	totalData = 0
+
 	version = 'Not stream yet!'
+
 	def __init__(self, master, serveraddr, serverport, rtpport, filename):
 		self.master = master
 		self.master.protocol("WM_DELETE_WINDOW", self.handler)
@@ -164,8 +171,14 @@ class Client:
 		self.sendRtspRequest(self.TEARDOWN)
 		self.master.destroy()
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
-		rate = float(self.counter/self.frameNbr)
-		print('-'*60 + "\nRTP Packet Loss Rate :" + str(rate) +"\n" + '-'*60)
+
+		# Calculate stats
+		lossRate = float(self.counter/self.frameNbr)
+		dataRate = float(self.totalData / (self.texec * 1000))
+		print('='*60 + 
+			"\nRTP Packet Loss Rate: {:.2f}".format(lossRate) + 
+			"\nTransmission Rate:    {:.2f}".format(dataRate) + " Kbps\n"
+			+ '='*60)
 		sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
@@ -199,7 +212,7 @@ class Client:
 
 					try:
 						if self.frameNbr + 1 != packet.seqNum():
-							self.counter += packet.seqNum() - self.frameNbr -1
+							self.counter += packet.seqNum() - (self.frameNbr + 1)
 							print('!'*60 + "\nPACKET LOSS\n" + '!'*60)
 						currFrameNbr = packet.seqNum()
 						self.version = packet.version()
@@ -211,6 +224,7 @@ class Client:
 
 					if currFrameNbr > self.frameNbr: # Discard the late packet
 						self.frameNbr = currFrameNbr
+						self.totalData += len(packet.getPayload())
 						self.updateMovie(self.writeFrame(packet.getPayload()))
 
 			except:
@@ -364,15 +378,27 @@ class Client:
 						self.playEvent = threading.Event()
 						self.playEvent.clear()
 
+						# Start tracking time
+						self.tstart = time.time()
+
 					elif self.requestSent == self.PAUSE:
 						self.state = self.READY
 						# The play thread exits. A new thread is created on resume.
 						self.playEvent.set()
+						
+						self.tend = time.time()
+						self.texec += self.tend - self.tstart
+						# Stop tracking time
+						self.tstart = 0	
 
 					elif self.requestSent == self.TEARDOWN:
 						self.state = self.INIT
 						# Flag the teardownAcked to close the socket.
 						self.teardownAcked = 1 
+
+						if self.tstart:
+							self.tend = time.time()
+							self.texec += self.tend - self.tstart
 
 					elif self.requestSent == self.DESCRIBE:
 						print('SESSION DESCRIPTION INFO:')
