@@ -12,16 +12,22 @@ CACHE_FILE_EXT = ".jpg"
 
 class Client:
 
+	# RTSP request strings
 	SETUP_STR = 'SETUP'
 	PLAY_STR = 'PLAY'
 	PAUSE_STR = 'PAUSE'
 	TEARDOWN_STR = 'TEARDOWN'
 	DESCRIBE_STR = 'DESCRIBE'
+	OPTIONS_STR = 'OPTIONS'
+
+	# States
+	SWITCH = -1
 	INIT = 0
 	READY = 1
 	PLAYING = 2
-	state = INIT
+	state = SWITCH
 	
+	# Request sent
 	SETUP = 0
 	PLAY = 1
 	PAUSE = 2
@@ -29,12 +35,13 @@ class Client:
 	DESCRIBE = 4
 	FORWARD = 5
 	BACKWARD = 6
-
-	STEP_RANGE = 50
+	OPTIONS = 7
 
 	RTSP_VER = "RTSP/1.0"
 	TRANSPORT = "RTP/UDP"
 	
+	STEP_RANGE = 50
+
 	# For statistics
 	tbegin = 0
 	tend = 0
@@ -192,6 +199,11 @@ class Client:
 		if (self.state == self.READY or self.state == self.PLAYING) and (self.frameNbr - self.STEP_RANGE > 0):
 			self.sendRtspRequest(self.BACKWARD, -self.STEP_RANGE)
 
+	def selectMovie(self, index):
+		if self.state == self.INIT:
+			self.fileName = self.videoNames[index]
+			print('Select video ' + self.fileName)
+	
 	def exitClient(self):
 		"""Teardown button handler."""
 		self.sendRtspRequest(self.TEARDOWN)
@@ -246,7 +258,7 @@ class Client:
 					# if currFrameNbr > self.frameNbr: # Discard the late packet
 					self.frameNbr = currFrameNbr
 					self.totalData += len(packet.getPayload())
-					self.remtime.set_text('Cur: {:.1f}'.format(self.frameNbr * 0.05) + ' s')
+					self.remtime.set_text('Rem: {:.1f}'.format((self.totalCounter - self.frameNbr) * 0.05) + ' s')
 					self.updateMovie(self.writeFrame(packet.getPayload()))
 
 			except:
@@ -270,15 +282,25 @@ class Client:
 		except:
 			tkinter.messagebox.showwarning('Connection Failed', 'Connection to \'%s\' failed.' %self.serverAddr)
 
+		self.sendRtspRequest(self.OPTIONS)
+
 	# RTSP REQUESTS	
 
 	def sendRtspRequest(self, requestCode, playRange=0):
 		"""Send RTSP request to the server."""	
-		#-------------
-		# TO COMPLETE
-		#-------------
-		if requestCode == self.SETUP and self.state == self.INIT:
+		
+		if requestCode == self.OPTIONS and self.state == self.SWITCH:
 			threading.Thread(target=self.recvRtspReply).start()
+			self.rtspSeq+=1
+
+			request = "%s %s %s" % (self.OPTIONS_STR, '.Mjpeg', self.RTSP_VER)
+			request+="\nCSeq: %d" % self.rtspSeq
+
+			self.requestSent = self.OPTIONS
+
+
+		elif requestCode == self.SETUP and self.state == self.INIT:
+			# threading.Thread(target=self.recvRtspReply).start()
                 
 			# Update RTSP sequence number.
 			self.rtspSeq+=1
@@ -397,7 +419,7 @@ class Client:
 	def parseRtspReply(self, data):
 		"""Parse the RTSP reply from the server."""
 		#TO DO
-		print("Parsing Received Rtsp data...")
+		print("Received:\n" + data.decode() + '\n')
 
 		"""Parse the RTSP reply from the server."""
 		lines = data.decode().split('\n')
@@ -405,63 +427,83 @@ class Client:
 		
 		# Process only if the server reply's sequence number is the same as the request's
 		if seqNum == self.rtspSeq:
-			session = int(lines[2].split(' ')[1])
-			# New RTSP session ID
-			if self.sessionId == 0:
-				self.sessionId = session
-			
-			# Process only if the session ID is the same
-			if self.sessionId == session:
-				if int(lines[0].split(' ')[1]) == 200: 
-					if self.requestSent == self.SETUP:
-						#-------------
-						# TO COMPLETE
-						#-------------
-                        
-						# Update RTSP state.
-						self.state = self.READY
+
+			if self.requestSent == self.OPTIONS:
+				# No session
+				# RTSP/1.0 OK
+				# CSeq: 1
+				# Videos: fmds,fdmsak,mfdsk
+				self.state = self.INIT
+
+				self.videoBtns = []
+				self.videoNames = lines[2].split(' ')[1].split(',')
+				i = 0
+				for name in self.videoNames:
+					btn = customtkinter.CTkButton(master=self.master,fg_color=("gray"),
+						text=name,corner_radius=16, 
+						command=self.selectMovie(i))
+					btn.grid(row=3, column=i, padx=2, pady=2)
+					i += 1
+					self.videoBtns.append(btn)
+
+			else:	
+				session = int(lines[2].split(' ')[1])
+				# New RTSP session ID
+				if self.sessionId == 0:
+					self.sessionId = session
+				
+				# Process only if the session ID is the same
+				if self.sessionId == session:
+					if int(lines[0].split(' ')[1]) == 200: 
+						if self.requestSent == self.SETUP:
+							#-------------
+							# TO COMPLETE
+							#-------------
+							
+							# Update RTSP state.
+							self.state = self.READY
+							
+							# # Open RTP port.
+							self.openRtpPort()
+
 						
-						# # Open RTP port.
-						self.openRtpPort()
+							self.totalCounter = int(lines[3].split(' ')[1])
+							# print(self.totalCounter)
+							self.totaltime.set_text('Tot: ' + str(self.totalCounter * 0.05) + ' s')
+							self.remtime.set_text('Rem: ' + str(self.totalCounter * 0.05) + ' s')
 
-					
-						self.totalCounter = int(lines[3].split(' ')[1])
-						print(self.totalCounter)
-						self.totaltime.set_text('Tot: ' + str(self.totalCounter * 0.05) + ' s')
-						self.remtime.set_text('Cur: 0 s')
+						elif self.requestSent == self.PLAY:
+							self.state = self.PLAYING
+							threading.Thread(target=self.listenRtp).start()
+							self.playEvent = threading.Event()
+							self.playEvent.clear()
 
-					elif self.requestSent == self.PLAY:
-						self.state = self.PLAYING
-						threading.Thread(target=self.listenRtp).start()
-						self.playEvent = threading.Event()
-						self.playEvent.clear()
+							# Start tracking time
+							self.tstart = time.time()
 
-						# Start tracking time
-						self.tstart = time.time()
-
-					elif self.requestSent == self.PAUSE:
-						self.state = self.READY
-						# The play thread exits. A new thread is created on resume.
-						self.playEvent.set()
-						
-						self.tend = time.time()
-						self.texec += self.tend - self.tstart
-						# Stop tracking time
-						self.tstart = 0	
-
-					elif self.requestSent == self.TEARDOWN:
-						self.state = self.INIT
-						# Flag the teardownAcked to close the socket.
-						self.teardownAcked = 1 
-
-						if self.tstart:
+						elif self.requestSent == self.PAUSE:
+							self.state = self.READY
+							# The play thread exits. A new thread is created on resume.
+							self.playEvent.set()
+							
 							self.tend = time.time()
 							self.texec += self.tend - self.tstart
+							# Stop tracking time
+							self.tstart = 0	
 
-					elif self.requestSent == self.DESCRIBE:
-						print('SESSION DESCRIPTION INFO:')
-						print('Streaming kind: RTSP protocol')
-						print('Version: ' + str(self.version))
+						elif self.requestSent == self.TEARDOWN:
+							self.state = self.INIT
+							# Flag the teardownAcked to close the socket.
+							self.teardownAcked = 1 
+
+							if self.tstart:
+								self.tend = time.time()
+								self.texec += self.tend - self.tstart
+
+						elif self.requestSent == self.DESCRIBE:
+							print('SESSION DESCRIPTION INFO:')
+							print('Streaming kind: RTSP protocol')
+							print('Version: ' + str(self.version))
 
 					# elif self.requestSent == self.FORWARD or self.requestSent == self.BACKWARD:
 
