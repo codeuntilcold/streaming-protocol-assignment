@@ -27,12 +27,15 @@ class Client:
 	PAUSE = 2
 	TEARDOWN = 3
 	DESCRIBE = 4
+	FORWARD = 5
+	BACKWARD = 6
+
+	STEP_RANGE = 50
 
 	RTSP_VER = "RTSP/1.0"
 	TRANSPORT = "RTP/UDP"
 	
 	# For statistics
-	counter = 0
 	tbegin = 0
 	tend = 0
 	texec = 0
@@ -64,26 +67,41 @@ class Client:
 
 		# Create Setup button
 		#photo = ImageTk.PhotoImage(Image.open('./Setup.png').resize((32,32)))
-		self.setup = customtkinter.CTkButton(master=self.master,fg_color=("purple"),text="SET UP",corner_radius=16, command=self.setupMovie)
+		self.setup = customtkinter.CTkButton(master=self.master,fg_color=("#8FBDD9"),text="SET UP",corner_radius=16, command=self.setupMovie)
 		self.setup.place(relx=0.5, rely=0.5, anchor=tkinter.CENTER)#width=20, padx=3, pady=3)
 		self.setup.grid(row=1, column=0, padx=2, pady=2)
 
 		# Create Describe button		
-		self.describe = customtkinter.CTkButton(master=self.master,fg_color=("black"),text="DESCRIBE",corner_radius=16, command=self.describeMovie)
-		self.describe.grid(row=1, column=1, padx=2, pady=2)
+		# self.describe = customtkinter.CTkButton(master=self.master,fg_color=("black"),text="DESCRIBE",corner_radius=16, command=self.describeMovie)
+		# self.describe.grid(row=1, column=1, padx=2, pady=2)
 		
 		# Create Play button		
-		self.start = customtkinter.CTkButton(master=self.master,fg_color=("green"),text="PLAY",corner_radius=16, command=self.playMovie)
-		self.start.grid(row=1, column=2, padx=2, pady=2)
+		self.start = customtkinter.CTkButton(master=self.master,fg_color=("#566AA6"),text="PLAY",corner_radius=16, command=self.playMovie)
+		self.start.grid(row=1, column=1, padx=2, pady=2)
 		
 		# Create Pause button			
-		self.pause = customtkinter.CTkButton(master=self.master,fg_color=("#999900"),text="PAUSE",corner_radius=16, command=self.pauseMovie)
-		self.pause.grid(row=1, column=3, padx=2, pady=2)
+		self.pause = customtkinter.CTkButton(master=self.master,fg_color=("#495A8C"),text="PAUSE",corner_radius=16, command=self.pauseMovie)
+		self.pause.grid(row=1, column=2, padx=2, pady=2)
 		
 		# Create Teardown button
-		self.teardown = customtkinter.CTkButton(master=self.master,fg_color=("#990000"),text="TEARDOWN",corner_radius=16, command=self.exitClient)
-		self.teardown.grid(row=1, column=4, padx=2, pady=2)
+		self.teardown = customtkinter.CTkButton(master=self.master,fg_color=("#1E2D59"),text="TEARDOWN",corner_radius=16, command=self.exitClient)
+		self.teardown.grid(row=1, column=3, padx=2, pady=2)
 		
+		# Create Backward button
+		self.backwardbtn = customtkinter.CTkButton(master=self.master,fg_color=("#8FBDD9"),text="<<",corner_radius=16, command=self.backwardMovie)
+		self.backwardbtn.grid(row=2, column=0, padx=2, pady=2)
+		
+		# Create Forward button
+		self.forwardbtn = customtkinter.CTkButton(master=self.master,fg_color=("#566AA6"),text=">>",corner_radius=16, command=self.forwardMovie)
+		self.forwardbtn.grid(row=2, column=1, padx=2, pady=2)
+
+		# Create Time button
+		self.remtime = customtkinter.CTkButton(master=self.master,fg_color=("#495A8C"),text="...",corner_radius=16)
+		self.remtime.grid(row=2, column=2, padx=2, pady=2)
+
+		self.totaltime = customtkinter.CTkButton(master=self.master,fg_color=("#1E2D59"),text="...",corner_radius=16)
+		self.totaltime.grid(row=2, column=3, padx=2, pady=2)
+
 		# Create a label to display the movie
 		self.label = Label(self.master, height=19)
 		self.label.grid(row=0, column=0, columnspan=4, sticky=W+E+N+S, padx=5, pady=5) 
@@ -166,6 +184,14 @@ class Client:
 		if self.state == self.READY:
 			self.sendRtspRequest(self.PLAY)
 
+	def forwardMovie(self):
+		if (self.state == self.READY or self.state == self.PLAYING) and (self.frameNbr + self.STEP_RANGE < self.totalCounter):
+			self.sendRtspRequest(self.FORWARD, self.STEP_RANGE)
+
+	def backwardMovie(self):
+		if (self.state == self.READY or self.state == self.PLAYING) and (self.frameNbr - self.STEP_RANGE > 0):
+			self.sendRtspRequest(self.BACKWARD, -self.STEP_RANGE)
+
 	def exitClient(self):
 		"""Teardown button handler."""
 		self.sendRtspRequest(self.TEARDOWN)
@@ -173,12 +199,10 @@ class Client:
 		os.remove(CACHE_FILE_NAME + str(self.sessionId) + CACHE_FILE_EXT)
 
 		# Calculate stats
-		lossRate = float(self.counter/self.frameNbr)
-		dataRate = float(self.totalData / (self.texec * 1000))
-		print('='*60 + 
-			"\nRTP Packet Loss Rate: {:.2f}".format(lossRate) + 
-			"\nTransmission Rate:    {:.2f}".format(dataRate) + " Kbps\n"
-			+ '='*60)
+		# dataRate = float(self.totalData / (self.texec * 1000))
+		# print('='*60 + 
+		# 	"\nTransmission Rate:    {:.2f}".format(dataRate) + " Kbps\n"
+		# 	+ '='*60)
 		sys.exit(0)
 	
 	# SENDING AND RECEIVING FRAMES
@@ -211,9 +235,6 @@ class Client:
 					print("||Received Rtp Packet #" + str(packet.seqNum()) + "|| ")
 
 					try:
-						if self.frameNbr + 1 != packet.seqNum():
-							self.counter += packet.seqNum() - (self.frameNbr + 1)
-							print('!'*60 + "\nPACKET LOSS\n" + '!'*60)
 						currFrameNbr = packet.seqNum()
 						self.version = packet.version()
 					except:
@@ -222,15 +243,16 @@ class Client:
 						traceback.print_exc(file=sys.stdout)
 						print('-'*60)
 
-					if currFrameNbr > self.frameNbr: # Discard the late packet
-						self.frameNbr = currFrameNbr
-						self.totalData += len(packet.getPayload())
-						self.updateMovie(self.writeFrame(packet.getPayload()))
+					# if currFrameNbr > self.frameNbr: # Discard the late packet
+					self.frameNbr = currFrameNbr
+					self.totalData += len(packet.getPayload())
+					self.remtime.set_text('Cur: {:.1f}'.format(self.frameNbr * 0.05) + ' s')
+					self.updateMovie(self.writeFrame(packet.getPayload()))
 
 			except:
 				# Stop listening upon requesting PAUSE or TEARDOWN
 				print("Didn`t receive data!")
-				if self.playEvent.isSet():
+				if self.playEvent.isSet() or self.frameNbr >= self.totalCounter:
 					break
 
 				# Upon receiving ACK for TEARDOWN request,
@@ -250,7 +272,7 @@ class Client:
 
 	# RTSP REQUESTS	
 
-	def sendRtspRequest(self, requestCode):
+	def sendRtspRequest(self, requestCode, playRange=0):
 		"""Send RTSP request to the server."""	
 		#-------------
 		# TO COMPLETE
@@ -279,6 +301,7 @@ class Client:
 			request = "%s %s %s" % (self.PLAY_STR,self.fileName,self.RTSP_VER)
 			request+="\nCSeq: %d" % self.rtspSeq
 			request+="\nSession: %d"%self.sessionId
+			request+="\nRange: %d"%playRange
                 
 			
 			# Keep track of the sent request.
@@ -322,7 +345,32 @@ class Client:
 			request+="\nSession: %d" % self.sessionId
 			
 			self.requestSent = self.DESCRIBE
-		
+
+		elif requestCode == self.BACKWARD:
+			
+			# Update RTSP sequence number.
+			self.rtspSeq+=1
+			
+			# Write the RTSP request to be sent.
+			request = "%s %s %s" % (self.PLAY_STR, self.fileName, self.RTSP_VER)
+			request+="\nCSeq: %d" % self.rtspSeq
+			request+="\nSession: %d" % self.sessionId
+			request+="\nRange: %d"%playRange
+			
+			self.requestSent = self.PLAY
+
+		elif requestCode == self.FORWARD:
+
+			# Update RTSP sequence number.
+			self.rtspSeq+=1
+			
+			# Write the RTSP request to be sent.
+			request = "%s %s %s" % (self.PLAY_STR, self.fileName, self.RTSP_VER)
+			request+="\nCSeq: %d" % self.rtspSeq
+			request+="\nSession: %d" % self.sessionId
+			request+="\nRange: %d"%playRange
+			
+			self.requestSent = self.PLAY
 		else:
 			return
 		
@@ -365,12 +413,22 @@ class Client:
 			# Process only if the session ID is the same
 			if self.sessionId == session:
 				if int(lines[0].split(' ')[1]) == 200: 
-
 					if self.requestSent == self.SETUP:
+						#-------------
+						# TO COMPLETE
+						#-------------
+                        
 						# Update RTSP state.
 						self.state = self.READY
-						# Open RTP port.
+						
+						# # Open RTP port.
 						self.openRtpPort()
+
+					
+						self.totalCounter = int(lines[3].split(' ')[1])
+						print(self.totalCounter)
+						self.totaltime.set_text('Tot: ' + str(self.totalCounter * 0.05) + ' s')
+						self.remtime.set_text('Cur: 0 s')
 
 					elif self.requestSent == self.PLAY:
 						self.state = self.PLAYING
@@ -404,6 +462,9 @@ class Client:
 						print('SESSION DESCRIPTION INFO:')
 						print('Streaming kind: RTSP protocol')
 						print('Version: ' + str(self.version))
+
+					# elif self.requestSent == self.FORWARD or self.requestSent == self.BACKWARD:
+
 
 """
 TIẾN - GIAO DIỆN: CREATEWIDGETS, HANDLER, UPDATE MOVIE, WRITEFRAME
