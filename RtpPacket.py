@@ -12,9 +12,6 @@ class RtpPacket:
 		"""Encode the RTP packet with header fields and payload."""
 
 		timestamp = int(time())
-		#--------------
-		# TO COMPLETE
-		#--------------
 		# Fill the header bytearray with RTP header fields
 		self.header[0] = version << 6
 		self.header[0] = self.header[0] | padding << 5
